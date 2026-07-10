@@ -216,19 +216,25 @@ void PaintsNumberer::numerate_in_text()
     duckx::Paragraph& _par = _document->paragraphs();
     for (; _par.has_next(); _par.next())
     {
-        std::wstring paragraph_text = get_wstring_paragraph_text(_par);
-        if (!is_pattern_has(paragraph_text))
+        unsigned int count = 0;
+        std::wstring paragraph_text = get_wstring_paragraph_text(_par, count);
+        std::string str_paragraph_text = boost::locale::conv::utf_to_utf<char>(paragraph_text);
+
+        LOG("Checking paragraph: " + str_paragraph_text);
+        if (!is_pattern_has(paragraph_text) && !is_has_intext_pattern(paragraph_text))
         {
             duckx::Run& _run = _par.runs();
 
+            int counter = 0;
             bool is_partted_bracket = false;
             std::string semi_brackets, run_text;
-            while(_run.has_next())
+            while(_run.has_next() && counter < count * 2)
             {
                 if (run_text.empty())
                 {
                     run_text = _run.get_text();
                 }
+                LOG("Check line: " + run_text);
 
                 auto _bracket_start = std::find(run_text.begin(), run_text.end(), '{');
                 int position = run_text.begin() - _bracket_start;
@@ -242,7 +248,8 @@ void PaintsNumberer::numerate_in_text()
                     std::string brackets(_bracket_start, _bracket_end);
                     boost::algorithm::trim_if(brackets, boost::algorithm::is_any_of("{}"));
 
-                    run_text.erase(_bracket_start, _bracket_end);
+                    LOG("Find match: " + brackets << " Last: " << *_bracket_end);
+                    run_text.erase(_bracket_start, ++_bracket_end);
 
                     int value = 0;
                     run_text.insert(position, std::to_string(value));
@@ -255,19 +262,12 @@ void PaintsNumberer::numerate_in_text()
                         )
                 {
                     std::string part_brackets(_bracket_start, run_text.end());
-                    boost::algorithm::trim_if(part_brackets, boost::algorithm::is_any_of("{}"));
+                    semi_brackets = part_brackets;
+                    LOG("Find match: " + part_brackets);
+                    boost::algorithm::trim_if(part_brackets, boost::algorithm::is_any_of("{} "));
 
                     run_text.erase(_bracket_start, run_text.end());
-
-                    if (part_brackets.empty())
-                    {
-                        _run.set_text(run_text);
-                    }
-                    else {
-                        int value = 0;
-                        run_text.insert(position, std::to_string(value));
-                        _run.set_text(run_text);
-                    }
+                    _run.set_text(run_text);
 
                     is_partted_bracket = true;
                 }
@@ -275,8 +275,21 @@ void PaintsNumberer::numerate_in_text()
                 {
                     if (_bracket_end == run_text.end())
                     {
+                        LOG("Message: " + run_text);
+                        semi_brackets += run_text;
+
+                        LOG("Semi now: " + semi_brackets);
+                        _run.set_text("");
                     }
                     else {
+                        LOG("Message semi of end: " + run_text);
+                        semi_brackets += run_text;
+
+                        LOG("Semi now: " + semi_brackets);
+                        boost::algorithm::trim_if(semi_brackets, boost::algorithm::is_any_of("{}"));
+
+                        _run.set_text("Nice...");
+
                         is_partted_bracket = false;
                     }
                 }
@@ -288,6 +301,8 @@ void PaintsNumberer::numerate_in_text()
                     _run = _run.next();
                     run_text.clear();
                 }
+
+                counter++;
             }
         }
 
@@ -311,6 +326,19 @@ bool PaintsNumberer::is_pattern_has(std::wstring _text)
             break;
         }
     }
+
+    return _is_compared;
+}
+
+bool PaintsNumberer::is_has_intext_pattern(std::wstring _text)
+{
+    std::string _text_in_str = boost::locale::conv::utf_to_utf<char>(_text);
+    std::wstring _pattern = boost::locale::conv::utf_to_utf<wchar_t>(patterns_of_elements.in_text_paint_num.str());
+
+    boost::wregex _pat(_pattern);
+    bool _is_compared = boost::regex_match(_text, _pat);;
+
+    LOG((boost::format("Checking line: '%s'. Is compared: %d...") % _text_in_str % _is_compared).str());
 
     return _is_compared;
 }
@@ -422,9 +450,15 @@ std::vector<duckx::Run> PaintsNumberer::get_runs(duckx::Paragraph& _par)
     return _runs;
 }
 
-
 std::wstring PaintsNumberer::get_wstring_paragraph_text(duckx::Paragraph& _par)
 {
+    unsigned int runs = 0;
+    return get_wstring_paragraph_text(_par, runs);
+}
+
+std::wstring PaintsNumberer::get_wstring_paragraph_text(duckx::Paragraph& _par, unsigned int& runs_count)
+{
+    runs_count = 0;
     duckx::Run _run_of_par_ = _par.runs();
 
     std::wstringstream _text_of_paragraph;
@@ -432,6 +466,7 @@ std::wstring PaintsNumberer::get_wstring_paragraph_text(duckx::Paragraph& _par)
         std::string text = _run_of_par_.get_text();
 
         _text_of_paragraph << boost::locale::conv::utf_to_utf<wchar_t>(text);
+        runs_count++;
     }
 
     std::wstring result_text = _text_of_paragraph.str();

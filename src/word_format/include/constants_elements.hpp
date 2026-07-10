@@ -7,7 +7,7 @@
 
 constexpr std::string PAINT_NUM_PLACE = "{[\\w_-]*}";
 constexpr std::string PARTITIONER_PATTERN = "{NP}";
-constexpr std::string IN_TEXT_PAINT_NUM_PLACE = "({(N|P)?})";
+constexpr std::string IN_TEXT_PAINT_NUM_PLACE = "({([+-]?\\d+)?})";
 
 struct PATTERNS {
     const boost::regex paint_num_pat;

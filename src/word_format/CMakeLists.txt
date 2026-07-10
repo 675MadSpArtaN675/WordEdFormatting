@@ -29,7 +29,7 @@ message("Header files: ${HEADERS};\nSource files: ${SOURCES}")
 add_library(word_formatter SHARED ${SOURCES} ${HEADERS})
 
 target_include_directories(word_formatter PUBLIC "include" ${LIBRARIES_INCLUDES})
-target_link_libraries(word_formatter PUBLIC Boost::headers Log Regex duckx::duckx PRIVATE pugixml )
+target_link_libraries(word_formatter PUBLIC Boost::headers Log Regex duckx::duckx PRIVATE pugixml)
 target_compile_definitions(word_formatter PRIVATE DEBUG_LOG)
 
 target_compile_definitions(word_formatter PRIVATE BUILD_LIB)

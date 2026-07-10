@@ -1,5 +1,5 @@
 import sys
-import time as t 
+import time as t
 import pathlib as pl
 import subprocess as s
 import threading as th
@@ -14,17 +14,17 @@ def decoding(line: str | bytes):
 def is_colored(input_val: str, is_col: bool):
     return input_val if is_col else ""
 
-def print_remains_text(proc, stream, out, title: str, errors: list[str], _is_colored: bool):
+def print_remains_text(proc, stream, errors, out, title: str, _is_colored: bool):
     out_text = out.readlines()
     is_colored_func = lambda x: is_colored(x, _is_colored)
     remains = "".join(map(lambda x: is_colored_func(c.Fore.BLUE) + f"[{title}]: " + is_colored_func(c.Fore.LIGHTGREEN_EX) + decoding(x), out_text))
 
     remains_errors = str()
-    if proc.returncode != 0 and errors is not None:
+    if errors is not None:
         error_text = errors.readlines()
         remains_errors = "".join(map(lambda x: is_colored_func(c.Fore.RED) + "[ERROR]: " + is_colored_func(c.Fore.LIGHTRED_EX) + decoding(x), error_text))
-        
-    result_remains = remains + (remains_errors if proc.returncode != 0 and errors is not None else "")
+
+    result_remains = remains + (remains_errors if errors is not None else "")
     print(result_remains.strip(), file=stream)
 
 def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = False):
@@ -38,25 +38,22 @@ def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = False):
     if to_file_write_too:
         file_of = open("logs.txt")
         streams.append(streamOptions(file_of, False))
-    
+
     while proc.poll() is None:
         out_line = out.readline()
-        err_line = None
-        if errors is not None:
-            err_line = errors.readline()
 
         if out_line:
             line = decoding(out_line).strip()
-            
+
             for stream in streams:
                 print(is_colored(c.Fore.BLUE, stream.is_colored) + f"[{title}]: " + is_colored(c.Fore.LIGHTGREEN_EX, stream.is_colored) + line, file=stream.stream)
-       
-        if not out_line and not err_line:
+
+        if not out_line:
             t.sleep(0.3)
-    
+
     for stream_opts in streams:
-        print_remains_text(proc, stream_opts.stream, out, title, errors, stream_opts.is_colored)
-    
+        print_remains_text(proc, stream_opts.stream, out, errors, title, stream_opts.is_colored)
+
     out.close()
 
     if errors is not None:
@@ -83,7 +80,7 @@ class CMakeInteractor:
 
         print_th = th.Thread(target=PrintErrors, args=[configure_proc, title])
         print_th.start()
-        
+
         configure_proc.wait()
         print_th.join()
 
@@ -108,8 +105,8 @@ class CMakeInteractor:
             file_name = file.name
             if file_name not in test_files_exclude and file.is_file():
                 print(c.Fore.GREEN + "\nRunning test: " + c.Fore.LIGHTGREEN_EX + file_name + "\n")
-                
-                command = f"cd {file.parent} && {file}"
+
+                command = f"cd {file.parent} && {file} --log_level=message"
                 print(f"Ready command: {c.Fore.CYAN}{command}")
                 test_process = s.Popen(command.split(), shell=True, encoding='utf-8', cwd=cwd, stdout=s.PIPE, stderr=s.STDOUT)
                 self._configure_subproc_obj(test_process, "TEST")
@@ -127,7 +124,7 @@ def main():
         interactor = CMakeInteractor(build_dir)
         interactor.configure(boost_directory)
         interactor.build()
-        
+
         print(c.Fore.GREEN + "\nCopying test files...")
         interactor.copy_test_files(["*.docx"])
 

@@ -78,9 +78,11 @@ protected:
     void add_paint_num_to_table(const unsigned int& paragraph_num, unsigned int paint_num);
 
     bool is_pattern_has(std::wstring _text);
+    bool is_has_intext_pattern(std::wstring _text);
 
     std::vector<duckx::Run> get_runs(duckx::Paragraph& _par);
     std::wstring get_wstring_paragraph_text(duckx::Paragraph& _par);
+    std::wstring get_wstring_paragraph_text(duckx::Paragraph& _par, unsigned int& count);
 
 
     std::unique_ptr<duckx::Document> _document;
