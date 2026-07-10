@@ -15,7 +15,7 @@ PaintsNumberer::PaintsNumberer() : PaintsNumberer("") { }
 
 PaintsNumberer::PaintsNumberer(std::string filename, unsigned int min_numeration, unsigned int max_numeration) :
     _document(std::make_unique<duckx::Document>(filename)),
-    _max_numeration(max_numeration), 
+    _max_numeration(max_numeration),
     _min_numeration(min_numeration),
     _paint_patterns{ PatternTitle(STANDARD_PAINT_PATTERN, false)},
     _paints_count(0)
@@ -24,7 +24,7 @@ PaintsNumberer::PaintsNumberer(std::string filename, unsigned int min_numeration
 
 PaintsNumberer::PaintsNumberer(const PaintsNumberer& other) : _paint_patterns(other._paint_patterns) { }
 
-PaintsNumberer::PaintsNumberer(PaintsNumberer&& other) : 
+PaintsNumberer::PaintsNumberer(PaintsNumberer&& other) :
     _document(std::move(other._document)),
     _min_numeration(std::move(other._min_numeration)),
     _max_numeration(std::move(other._max_numeration)),
@@ -72,9 +72,10 @@ duckx::Document* PaintsNumberer::releaseFile()
 void PaintsNumberer::addPaintPattern(std::string pattern, bool is_title_clear) {
     LOG((boost::format("Input pattern: %s;\nIs title need clear: %d") % pattern % is_title_clear).str());
 
-    if (!pattern.empty()) {
+    PatternTitle title_(pattern, is_title_clear);
+    if (!_paint_patterns.contains(title_)) {
         LOG("Inserting in list..");
-        _paint_patterns.push_back(PatternTitle(pattern, is_title_clear));
+        _paint_patterns.insert(title_);
 
         return;
     }
@@ -88,16 +89,18 @@ void PaintsNumberer::changePaintPattern(unsigned int index, std::string pattern,
     auto _begin = _paint_patterns.begin();
     std::advance(_begin, index);
 
+    auto _title = _paint_patterns.extract(_begin);
     if (_begin != end(_paint_patterns))
     {
         if (!pattern.empty()) {
             LOG("Changing pattern...");
-            _begin->pattern = pattern;
+            _title.value().pattern = pattern;
         }
 
         LOG("Setting flag 'is need to clear'...");
-        _begin->is_title_clear = is_title_clear;
+        _title.value().is_title_clear = is_title_clear;
 
+        _paint_patterns.insert(std::move(_title));
         return;
     }
 
@@ -165,7 +168,7 @@ bool PaintsNumberer::empty()
 {
     LOG((boost::format("Is paint empty: %d\nIs document has: %d") % _paint_patterns.empty() % _document).str());
 
-    return _paint_patterns.empty() && _document;
+    return _paint_patterns.empty() || !_document;
 }
 
 void PaintsNumberer::clear()
@@ -175,7 +178,7 @@ void PaintsNumberer::clear()
 }
 
 void PaintsNumberer::set_min_numeration(unsigned int index)
-{ 
+{
     LOG((boost::format("Set min numeration: %d") % index).str());
     _min_numeration = index;
 }
@@ -208,7 +211,108 @@ unsigned long PaintsNumberer::init_paint_num()
 
 void PaintsNumberer::numerate_in_text()
 {
-    
+    _document->open();
+
+    duckx::Paragraph& _par = _document->paragraphs();
+    for (; _par.has_next(); _par.next())
+    {
+        std::wstring paragraph_text = get_wstring_paragraph_text(_par);
+        if (!is_pattern_has(paragraph_text))
+        {
+            duckx::Run& _run = _par.runs();
+
+            bool is_partted_bracket = false;
+            std::string semi_brackets, run_text;
+            while(_run.has_next())
+            {
+                if (run_text.empty())
+                {
+                    run_text = _run.get_text();
+                }
+
+                auto _bracket_start = std::find(run_text.begin(), run_text.end(), '{');
+                int position = run_text.begin() - _bracket_start;
+
+                auto _bracket_end = std::find(run_text.begin(), run_text.end(), '}');
+
+                if (_bracket_start != run_text.end()
+                    && _bracket_end != run_text.end()
+                    && _bracket_end - _bracket_start > 0) {
+
+                    std::string brackets(_bracket_start, _bracket_end);
+                    boost::algorithm::trim_if(brackets, boost::algorithm::is_any_of("{}"));
+
+                    run_text.erase(_bracket_start, _bracket_end);
+
+                    int value = 0;
+                    run_text.insert(position, std::to_string(value));
+                    _run.set_text(run_text);
+
+                }
+                else if (_bracket_start != run_text.end() &&
+                        (_bracket_end - _bracket_start <= 0
+                            || _bracket_end == run_text.end())
+                        )
+                {
+                    std::string part_brackets(_bracket_start, run_text.end());
+                    boost::algorithm::trim_if(part_brackets, boost::algorithm::is_any_of("{}"));
+
+                    run_text.erase(_bracket_start, run_text.end());
+
+                    if (part_brackets.empty())
+                    {
+                        _run.set_text(run_text);
+                    }
+                    else {
+                        int value = 0;
+                        run_text.insert(position, std::to_string(value));
+                        _run.set_text(run_text);
+                    }
+
+                    is_partted_bracket = true;
+                }
+                else if (is_partted_bracket)
+                {
+                    if (_bracket_end == run_text.end())
+                    {
+                    }
+                    else {
+                        is_partted_bracket = false;
+                    }
+                }
+
+                if ((_bracket_start == run_text.end()
+                        && _bracket_end == run_text.end())
+                    || is_partted_bracket)
+                {
+                    _run = _run.next();
+                    run_text.clear();
+                }
+            }
+        }
+
+    }
+
+    _document->save();
+}
+
+bool PaintsNumberer::is_pattern_has(std::wstring _text)
+{
+    bool _is_compared = false;
+    for (const PatternTitle& pattern : _paint_patterns)
+    {
+        boost::wregex _pat(boost::locale::conv::utf_to_utf<wchar_t>(pattern.pattern));
+
+        _is_compared = boost::regex_match(_text, _pat);
+        LOG((boost::format("Checking pattern: '%s'. Is compared: %d...") % pattern.pattern % _is_compared).str());
+
+        if (_is_compared)
+        {
+            break;
+        }
+    }
+
+    return _is_compared;
 }
 
 void PaintsNumberer::numerate()
@@ -217,36 +321,30 @@ void PaintsNumberer::numerate()
 
     unsigned long paint_num = init_paint_num();
     duckx::Paragraph& _par = _document->paragraphs();
-    for (; _par.has_next(); _par = _par.next())
+    for (int paragraph_num = 0; _par.has_next(); _par = _par.next(), paragraph_num++)
     {
         LOG("Getting texts...");
-        
+
         std::wstring _text = get_wstring_paragraph_text(_par);
 
         LOG("Converting them...");
         LOG("Get paragraph's text: '" << boost::locale::conv::utf_to_utf<char>(_text) << "'. Paint num: '" << std::to_string(paint_num) << "'...");
 
         std::vector<duckx::Run> _runs = get_runs(_par);
-        for (const PatternTitle& pattern : _paint_patterns)
+        if (is_pattern_has(_text))
         {
-            boost::wregex _pat(boost::locale::conv::utf_to_utf<wchar_t>(pattern.pattern));
-            
-            LOG((boost::format("Checking pattern: '%s'...") % pattern.pattern).str());
-            if (boost::regex_match(_text, _pat))
-            {
-                LOG("Pattern access...");
-                performing_runs(_runs, paint_num);
-            }
+            LOG("Pattern access...");
+            performing_runs(_runs, paint_num, paragraph_num);
         }
 
         align_runs(_runs, _par.runs());
     }
-    
+
     LOG("Saving doc...");
     _document->save();
 }
 
-void PaintsNumberer::performing_runs(std::vector<duckx::Run>& _runs, unsigned long& paint_num) {
+void PaintsNumberer::performing_runs(std::vector<duckx::Run>& _runs, unsigned long& paint_num, const unsigned long& par_num) {
     LOG("Paint num: " << std::to_string(paint_num) << " Runs count: " << _runs.size());
 
     for (int i = 0; i < _runs.size(); i++) {
@@ -261,9 +359,9 @@ void PaintsNumberer::performing_runs(std::vector<duckx::Run>& _runs, unsigned lo
         LOG("Performing signs...");
         for (; _start != _end; _start++) {
             boost::smatch _match = *_start;
-            
+
             if (_match[0].matched) {
-                perform_full_text(run_text, _start, paint_num);
+                perform_full_text(run_text, _start, paint_num, par_num);
 
                 _paints_count++;
             }
@@ -299,6 +397,7 @@ void PaintsNumberer::performing_runs(std::vector<duckx::Run>& _runs, unsigned lo
 
                 std::string num = std::to_string(paint_num++);
                 boost::replace_first(run_text, "{", num);
+                add_paint_num_to_table(par_num, paint_num);
 
                 i = start_index;
                 _paints_count++;
@@ -339,7 +438,7 @@ std::wstring PaintsNumberer::get_wstring_paragraph_text(duckx::Paragraph& _par)
     return result_text;
 }
 
-void PaintsNumberer::perform_full_text(std::string& run_text, boost::sregex_iterator& _start, unsigned long& paint_num){
+void PaintsNumberer::perform_full_text(std::string& run_text, boost::sregex_iterator& _start, unsigned long& paint_num, const unsigned long& par_num){
     std::string part = boost::algorithm::trim_copy(_start->str());
 
     LOG("Found: " << part << " Num: " << paint_num);
@@ -350,6 +449,7 @@ void PaintsNumberer::perform_full_text(std::string& run_text, boost::sregex_iter
 
     LOG("Replacing...");
     boost::algorithm::replace_first(run_text, part, std::to_string(paint_num));
+    add_paint_num_to_table(par_num, paint_num);
 
     if (paint_num < _max_numeration || _max_numeration == 0) {
         paint_num++;
@@ -365,7 +465,7 @@ std::string PaintsNumberer::process_line(const std::string& input_line, unsigned
 
     boost::smatch _match;
     if (!boost::regex_match(_line, _match, patterns_of_elements.partitioner_paint_num_pat, boost::regex_constants::match_partial)
-        && _match[0].first != _match[0].second 
+        && _match[0].first != _match[0].second
         && _match[0].second - _match[0].first > 1)
     {
         LOG("Update num...");
@@ -404,4 +504,13 @@ void PaintsNumberer::align_runs(std::vector<duckx::Run>& _prepared_runs, duckx::
         LOG("Old run: " << runs_old.get_text() << " New run text: " << new_run_text);
         runs_old.set_text(new_run_text);
     }
+}
+void PaintsNumberer::add_paint_num_to_table(const unsigned int& paragraph_num, unsigned int paint_num)
+{
+    if (!_setted_paints.contains(paragraph_num))
+    {
+        _setted_paints[paragraph_num] = std::vector<unsigned int>();
+    }
+
+    _setted_paints[paragraph_num].push_back(paint_num);
 }

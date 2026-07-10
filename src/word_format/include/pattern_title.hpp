@@ -15,6 +15,13 @@ struct EXPORT PatternTitle {
     PatternTitle(std::string _pattern, bool _is_title_clear);
 
     boost::regex pattern_to_regex() const;
+
+    bool operator==(const PatternTitle& _pt) const noexcept;
+};
+
+template<>
+struct std::hash<PatternTitle> {
+    std::size_t operator()(const PatternTitle& pt) const noexcept;
 };
 
 #endif

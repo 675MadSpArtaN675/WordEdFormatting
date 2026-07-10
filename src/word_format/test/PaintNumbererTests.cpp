@@ -28,17 +28,53 @@ BOOST_AUTO_TEST_CASE(NumbererNumeratingTest)
     BOOST_TEST_MESSAGE("Testing numeration...");
     BOOST_TEST(!_numberer.empty());
 }
-BOOST_AUTO_TEST_CASE(NumbererNumeratingWithPartitionTest)
+
+BOOST_AUTO_TEST_CASE(NumbererNumeratingWithPartitionsTest)
 {
     try {
-    PaintsNumberer _numberer;
+        PaintsNumberer _numberer;
 
-    _numberer.setFile("TestFile_2.docx");
-    _numberer.addPaintPattern("Рисунок\\s*\\{.*\\}\\s*[‒–—−―]?[\\sа-яА-Я\\w]*", false);
-    _numberer.numerate();
+        _numberer.setFile("TestFile_2.docx");
+        _numberer.addPaintPattern("Рисунок\\s*\\{.*\\}\\s*[‒–—−―]?[\\sа-яА-Я\\w]*", false);
+        _numberer.numerate();
 
-    BOOST_TEST_MESSAGE("Testing numeration with partition...");
-    BOOST_TEST(!_numberer.empty());
+        BOOST_TEST_MESSAGE("Testing numeration with partition...");
+        BOOST_TEST(!_numberer.empty());
+    }
+    catch (const std::exception& _error){
+        BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
+    }
+}
+
+BOOST_AUTO_TEST_CASE(NumbererInTextNumerationTest)
+{
+    try {
+        PaintsNumberer _numberer;
+
+        _numberer.setFile("TestFile_4.docx");
+        _numberer.numerate();
+        _numberer.numerate_in_text();
+
+        BOOST_TEST_MESSAGE("Testing numeration with partition...");
+        BOOST_TEST(!_numberer.empty());
+    }
+    catch (const std::exception& _error){
+        BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
+    }
+
+}
+
+BOOST_AUTO_TEST_CASE(NumbererInTextNumerationWithPartitionTest)
+{
+    try {
+        PaintsNumberer _numberer;
+
+        _numberer.setFile("TestFile_3.docx");
+        _numberer.numerate();
+        _numberer.numerate_in_text();
+
+        BOOST_TEST_MESSAGE("Testing numeration with partition...");
+        BOOST_TEST(!_numberer.empty());
     }
     catch (const std::exception& _error){
         BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());

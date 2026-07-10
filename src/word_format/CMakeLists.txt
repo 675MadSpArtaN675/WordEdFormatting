@@ -13,7 +13,7 @@ list(APPEND LIBRARIES_INCLUDES "${DUCKX_DIRECTORY}/include")
 
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${LIBRARIES_DIRS} "${DUCKX_DIRECTORY}/cmake/duckx" "/usr/local" )
 
-find_package(Boost REQUIRED headers log regex)
+find_package(Boost REQUIRED headers Log Regex)
 find_package(duckx REQUIRED HINTS ${DUCKX_DIRECTORY})
 find_package(pugixml CONFIG REQUIRED)
 
@@ -29,7 +29,8 @@ message("Header files: ${HEADERS};\nSource files: ${SOURCES}")
 add_library(word_formatter SHARED ${SOURCES} ${HEADERS})
 
 target_include_directories(word_formatter PUBLIC "include" ${LIBRARIES_INCLUDES})
-target_link_libraries(word_formatter PUBLIC Boost::headers Boost::log Boost::regex duckx::duckx PRIVATE pugixml )
+target_link_libraries(word_formatter PUBLIC Boost::headers Log Regex duckx::duckx PRIVATE pugixml )
+target_compile_definitions(word_formatter PRIVATE DEBUG_LOG)
 
 target_compile_definitions(word_formatter PRIVATE BUILD_LIB)
 

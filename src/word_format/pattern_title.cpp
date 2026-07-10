@@ -10,3 +10,15 @@ boost::regex PatternTitle::pattern_to_regex() const
 {
     return boost::regex(pattern);
 }
+
+bool PatternTitle::operator==(const PatternTitle& _pt) const noexcept
+{
+    return _pt.pattern == _pt.pattern;
+}
+
+std::size_t std::hash<PatternTitle>::operator()(const PatternTitle& pt) const noexcept
+{
+    std::hash<std::string> _pattern_hash{};
+
+    return _pattern_hash(pt.pattern);
+}

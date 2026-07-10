@@ -6,17 +6,14 @@
 
 #define STANDARD_PAINT_PATTERN "Рисунок\\s*\\{.*\\}\\s*[‒–—−―]?[\\sа-яА-Я\\w]*"
 
-#ifdef DEBUG_LOG
-    #define LOG(message) std::cout << message << std::endl
-#else
-    #define LOG(message)
-#endif
-
+#include <map>
 #include <list>
 #include <vector>
 #include <string>
 #include <memory>
 #include <iterator>
+#include <iostream>
+#include <unordered_set>
 
 #include <boost/log/common.hpp>
 #include <boost/log/trivial.hpp>
@@ -26,6 +23,13 @@
 #include "exporter.hpp"
 #include "constants_elements.hpp"
 #include "pattern_title.hpp"
+
+#ifdef DEBUG_LOG
+    #define LOG(message) std::cout << message << std::endl
+#else
+    #define LOG(message)
+#endif
+
 
 class EXPORT PaintsNumberer {
 public:
@@ -45,7 +49,7 @@ public:
     std::string getPattern(unsigned int index);
 
     std::list<std::string> patterns();
-    
+
     void set_min_numeration(unsigned int index);
     void set_max_numeration(unsigned int index);
 
@@ -55,7 +59,7 @@ public:
     unsigned int paints_count();
     bool empty();
     void clear();
-    
+
     void numerate_in_text();
     void numerate();
 
@@ -65,18 +69,23 @@ public:
 protected:
     unsigned long init_paint_num();
 
-    void performing_runs(std::vector<duckx::Run>& _runs, unsigned long& paint_num);
-    void perform_full_text(std::string& run_text, boost::sregex_iterator& _start, unsigned long& paint_num);
-    
+    void performing_runs(std::vector<duckx::Run>& _runs, unsigned long& paint_num, const unsigned long& par_num);
+    void perform_full_text(std::string& run_text, boost::sregex_iterator& _start, unsigned long& paint_num, const unsigned long& par_num);
+
     std::string process_line(const std::string& input_line, unsigned long& paint_num, bool& is_end);
+
     void align_runs(std::vector<duckx::Run>& _prepared_runs, duckx::Run& runs_old);
-    
+    void add_paint_num_to_table(const unsigned int& paragraph_num, unsigned int paint_num);
+
+    bool is_pattern_has(std::wstring _text);
+
     std::vector<duckx::Run> get_runs(duckx::Paragraph& _par);
     std::wstring get_wstring_paragraph_text(duckx::Paragraph& _par);
 
 
     std::unique_ptr<duckx::Document> _document;
-    std::list<PatternTitle> _paint_patterns;
+    std::unordered_set<PatternTitle> _paint_patterns;
+    std::map<unsigned int, std::vector<unsigned int>> _setted_paints;
 
     unsigned int _paints_count, _max_numeration, _min_numeration;
 
