@@ -236,8 +236,12 @@ void PaintsNumberer::numerate_in_text()
                 }
                 LOG("Check line: " + run_text);
 
+                if (run_text.empty() && _run.has_next())
+                {
+                    _run = _run.next();
+                    continue;
+                }
                 auto _bracket_start = std::find(run_text.begin(), run_text.end(), '{');
-                int position = run_text.begin() - _bracket_start;
 
                 auto _bracket_end = std::find(run_text.begin(), run_text.end(), '}');
 
@@ -245,14 +249,19 @@ void PaintsNumberer::numerate_in_text()
                     && _bracket_end != run_text.end()
                     && _bracket_end - _bracket_start > 0) {
 
+                    int position = _bracket_start - run_text.begin();
                     std::string brackets(_bracket_start, _bracket_end);
                     boost::algorithm::trim_if(brackets, boost::algorithm::is_any_of("{}"));
 
-                    LOG("Find match: " + brackets << " Last: " << *_bracket_end);
-                    run_text.erase(_bracket_start, ++_bracket_end);
+                    LOG("Find match: " + brackets);
+                    if (run_text.end() - _bracket_end > 0) {
+                        run_text.erase(_bracket_start, ++_bracket_end);
+                    }
 
                     int value = 0;
                     run_text.insert(position, std::to_string(value));
+
+                    LOG("New: " + run_text);
                     _run.set_text(run_text);
 
                 }
@@ -264,7 +273,10 @@ void PaintsNumberer::numerate_in_text()
                     std::string part_brackets(_bracket_start, run_text.end());
                     semi_brackets = part_brackets;
                     LOG("Find match: " + part_brackets);
-                    boost::algorithm::trim_if(part_brackets, boost::algorithm::is_any_of("{} "));
+
+                    if (!part_brackets.empty()) {
+                        boost::algorithm::trim_if(part_brackets, boost::algorithm::is_any_of("{} "));
+                    }
 
                     run_text.erase(_bracket_start, run_text.end());
                     _run.set_text(run_text);
@@ -283,12 +295,24 @@ void PaintsNumberer::numerate_in_text()
                     }
                     else {
                         LOG("Message semi of end: " + run_text);
-                        semi_brackets += run_text;
+                        std::string parted_part(run_text.begin(), ++_bracket_end);
 
-                        LOG("Semi now: " + semi_brackets);
+                        semi_brackets += parted_part;
+
+                        run_text.erase(run_text.begin(), _bracket_end);
+
+                        LOG("Semi now: " << semi_brackets);
                         boost::algorithm::trim_if(semi_brackets, boost::algorithm::is_any_of("{}"));
 
-                        _run.set_text("Nice...");
+                        int value = 0;
+                        run_text.insert(0, std::to_string(value));
+
+                        LOG("Run text: " << run_text);
+                        _run.set_text(run_text);
+
+                        if (_run.has_next()) {
+                            _run = _run.next();
+                        }
 
                         is_partted_bracket = false;
                     }
@@ -309,6 +333,11 @@ void PaintsNumberer::numerate_in_text()
     }
 
     _document->save();
+}
+
+long PaintsNumberer::get_direction_of(std::string bracket_expression, const unsigned int& paragraph_num)
+{
+    return 0;
 }
 
 bool PaintsNumberer::is_pattern_has(std::wstring _text)

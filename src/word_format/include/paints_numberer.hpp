@@ -77,6 +77,8 @@ protected:
     void align_runs(std::vector<duckx::Run>& _prepared_runs, duckx::Run& runs_old);
     void add_paint_num_to_table(const unsigned int& paragraph_num, unsigned int paint_num);
 
+    long get_direction_of(std::string bracket_expression, const unsigned int& paragraph_num);
+
     bool is_pattern_has(std::wstring _text);
     bool is_has_intext_pattern(std::wstring _text);
 
