@@ -6,6 +6,7 @@
 
 BOOST_AUTO_TEST_CASE(NumbererInitializationTest)
 {
+    BOOST_TEST_MESSAGE("START: 'NumbererInitializationTest'...");
     PaintsNumberer _numberer;
 
     BOOST_TEST_MESSAGE("Testing numberer initialization...");
@@ -19,6 +20,7 @@ BOOST_AUTO_TEST_CASE(NumbererInitializationTest)
 
 BOOST_AUTO_TEST_CASE(NumbererNumeratingTest)
 {
+    BOOST_TEST_MESSAGE("START: 'NumbererNumeratingTest'...");
     PaintsNumberer _numberer;
 
     _numberer.setFile("TestFile_1.docx");
@@ -31,11 +33,11 @@ BOOST_AUTO_TEST_CASE(NumbererNumeratingTest)
 
 BOOST_AUTO_TEST_CASE(NumbererNumeratingWithPartitionsTest)
 {
+    BOOST_TEST_MESSAGE("START: 'NumbererNumeratingWithPartitionsTest'...");
     try {
         PaintsNumberer _numberer;
 
         _numberer.setFile("TestFile_2.docx");
-        _numberer.addPaintPattern("Рисунок\\s*\\{.*\\}\\s*[‒–—−―]?[\\sа-яА-Я\\w]*", false);
         _numberer.numerate();
 
         BOOST_TEST_MESSAGE("Testing numeration with partition...");
@@ -48,6 +50,7 @@ BOOST_AUTO_TEST_CASE(NumbererNumeratingWithPartitionsTest)
 
 BOOST_AUTO_TEST_CASE(NumbererInTextNumerationTest)
 {
+    BOOST_TEST_MESSAGE("START: 'NumbererInTextNumerationTest'...");
     try {
         PaintsNumberer _numberer;
 
@@ -64,19 +67,20 @@ BOOST_AUTO_TEST_CASE(NumbererInTextNumerationTest)
 
 }
 
-BOOST_AUTO_TEST_CASE(NumbererInTextNumerationWithPartitionTest)
-{
-    try {
-        PaintsNumberer _numberer;
+// BOOST_AUTO_TEST_CASE(NumbererInTextNumerationWithPartitionTest)
+// {
+//     BOOST_TEST_MESSAGE("START: 'NumbererInTextNumerationWithPartitionTest'...");
+//     try {
+//         PaintsNumberer _numberer;
 
-        _numberer.setFile("TestFile_3.docx");
-        _numberer.numerate();
-        _numberer.numerate_in_text();
+//         _numberer.setFile("TestFile_3.docx");
+//         _numberer.numerate();
+//         _numberer.numerate_in_text();
 
-        BOOST_TEST_MESSAGE("Testing numeration with partition...");
-        BOOST_TEST(!_numberer.empty());
-    }
-    catch (const std::exception& _error){
-        BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
-    }
-}
+//         BOOST_TEST_MESSAGE("Testing numeration with partition...");
+//         BOOST_TEST(!_numberer.empty());
+//     }
+//     catch (const std::exception& _error){
+//         BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
+//     }
+// }

@@ -14,20 +14,21 @@ def decoding(line: str | bytes):
 def is_colored(input_val: str, is_col: bool):
     return input_val if is_col else ""
 
-def print_remains_text(proc, stream, errors, out, title: str, _is_colored: bool):
-    out_text = out.readlines()
-    is_colored_func = lambda x: is_colored(x, _is_colored)
-    remains = "".join(map(lambda x: is_colored_func(c.Fore.BLUE) + f"[{title}]: " + is_colored_func(c.Fore.LIGHTGREEN_EX) + decoding(x), out_text))
+def print_remains_text(stream, errors, out, title: str, _is_colored: bool):
+    if out_text is not None:
+        out_text = out.readlines()
+        is_colored_func = lambda x: is_colored(x, _is_colored)
+        remains = "".join(map(lambda x: is_colored_func(c.Fore.BLUE) + f"[{title}]: " + is_colored_func(c.Fore.LIGHTGREEN_EX) + decoding(x), out_text))
 
-    remains_errors = str()
-    if errors is not None:
-        error_text = errors.readlines()
-        remains_errors = "".join(map(lambda x: is_colored_func(c.Fore.RED) + "[ERROR]: " + is_colored_func(c.Fore.LIGHTRED_EX) + decoding(x), error_text))
+        remains_errors = str()
+        if errors is not None:
+            error_text = errors.readlines()
+            remains_errors = "".join(map(lambda x: is_colored_func(c.Fore.RED) + "[ERROR]: " + is_colored_func(c.Fore.LIGHTRED_EX) + decoding(x), error_text))
 
-    result_remains = remains + (remains_errors if errors is not None else "")
-    print(result_remains.strip(), file=stream)
+        result_remains = remains + (remains_errors if errors is not None else "")
+        print(result_remains.strip(), file=stream)
 
-def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = False):
+def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = True):
     streamOptions = cn.namedtuple("StreamOptions", ["stream", "is_colored"])
     streams = [streamOptions(sys.stdout, True)]
 
@@ -36,7 +37,7 @@ def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = False):
 
     file_of = None
     if to_file_write_too:
-        file_of = open("logs.txt")
+        file_of = open("logs.txt", mode="w", encoding='utf-8')
         streams.append(streamOptions(file_of, False))
 
     while proc.poll() is None:
