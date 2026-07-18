@@ -20,15 +20,12 @@
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/format.hpp>
 
+#include <exprtk.hpp>
+
 #include "exporter.hpp"
 #include "constants_elements.hpp"
 #include "pattern_title.hpp"
 
-#ifdef DEBUG_LOG
-    #define LOG(message) std::cout << message << std::endl
-#else
-    #define LOG(message)
-#endif
 
 struct EXPORT PaintPoint
 {
@@ -99,6 +96,9 @@ protected:
     std::unique_ptr<duckx::Document> _document;
     std::unordered_set<PatternTitle> _paint_patterns;
     std::map<unsigned int, std::vector<PaintPoint>> _setted_paints;
+
+    exprtk::symbol_table<double> _symbol_table;
+    exprtk::expression<double> _expression;
 
     unsigned int _paints_count, _max_numeration, _min_numeration;
 

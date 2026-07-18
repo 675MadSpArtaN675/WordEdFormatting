@@ -1,17 +1,23 @@
 #pragma once
 
-#ifdef BUILD_LIB
-    #ifdef _WIN32
+#ifdef EXPORT
+    #undef EXPORT
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+    #ifdef BUILD_LIB
         #define EXPORT __declspec(dllexport)
     #else
-        #define EXPORT __attribute__(visibility("default"))
+        #define EXPORT __declspec(dllimport)
     #endif
 #else
-    #ifdef _WIN32
-        #define EXPORT __declspec(dllimport)
-    #else
-        #define EXPORT
-    #endif
+    #define EXPORT __attribute__((visibility("default")))
+#endif
+
+#ifdef DEBUG_LOG
+    #define LOG(message) std::cout << message << std::endl
+#else
+    #define LOG(message)
 #endif
 
 #include <duckx/duckx.hpp>

@@ -67,20 +67,20 @@ BOOST_AUTO_TEST_CASE(NumbererInTextNumerationTest)
 
 }
 
-// BOOST_AUTO_TEST_CASE(NumbererInTextNumerationWithPartitionTest)
-// {
-//     BOOST_TEST_MESSAGE("START: 'NumbererInTextNumerationWithPartitionTest'...");
-//     try {
-//         PaintsNumberer _numberer;
+BOOST_AUTO_TEST_CASE(NumbererInTextNumerationWithPartitionTest)
+{
+    BOOST_TEST_MESSAGE("START: 'NumbererInTextNumerationWithPartitionTest'...");
+    try {
+        PaintsNumberer _numberer;
 
-//         _numberer.setFile("TestFile_3.docx");
-//         _numberer.numerate();
-//         _numberer.numerate_in_text();
+        _numberer.setFile("TestFile_3.docx");
+        _numberer.numerate();
+        _numberer.numerate_in_text();
 
-//         BOOST_TEST_MESSAGE("Testing numeration with partition...");
-//         BOOST_TEST(!_numberer.empty());
-//     }
-//     catch (const std::exception& _error){
-//         BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
-//     }
-// }
+        BOOST_TEST_MESSAGE("Testing numeration with partition...");
+        BOOST_TEST(!_numberer.empty());
+    }
+    catch (const std::exception& _error){
+        BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
+    }
+}

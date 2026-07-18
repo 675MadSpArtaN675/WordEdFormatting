@@ -11,7 +11,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 
-#include <exprtk.hpp>
 
 
 PaintsNumberer::PaintsNumberer() : PaintsNumberer("") { }
@@ -22,7 +21,13 @@ PaintsNumberer::PaintsNumberer(std::string filename, unsigned int min_numeration
     _min_numeration(min_numeration),
     _paint_patterns{ PatternTitle(STANDARD_PAINT_PATTERN, false)},
     _paints_count(0)
-{ }
+{
+    _symbol_table.add_constant("N", 1);
+    _symbol_table.add_constant("P", 1);
+    _symbol_table.add_constants();
+
+    _expression.register_symbol_table(_symbol_table);
+}
 
 
 PaintsNumberer::PaintsNumberer(const PaintsNumberer& other) : _paint_patterns(other._paint_patterns) { }
@@ -345,52 +350,59 @@ long PaintsNumberer::get_paint_num(std::string bracket_expression, const unsigne
                 bracket_expression.end(),
                 boost::lambda2::_1 == 'P' || boost::lambda2::_1 == 'N'
             );
+    char _action_char = *sym_iter;
 
-    if (*sym_iter == 'P') {
+    if (_action_char == 'P') {
         is_before = true;
     }
 
-    LOG(boost::format("Expression: '%s' - Paragraph: #%d; Run: #%d; Before or next: %d") % bracket_expression % paragraph_num % run_num % is_before);
     auto _compare = (is_before) ? [](const unsigned int& _first, const unsigned int& second){ return _first <= second; }
         : [](const unsigned int& _first, const unsigned int& second){ return _first >= second; };
 
+    unsigned int _run_num = static_cast<unsigned int>(run_num);
+
+    LOG("Normal run: " << run_num);
+    LOG(boost::format("Expression: '%s' - Paragraph: #%d; Run: #%d; Before or next: %d") % bracket_expression % paragraph_num % _run_num % is_before);
     std::vector<unsigned int> ready_paints;
     for (const std::pair<unsigned int, std::vector<PaintPoint>>& _paint_data : _setted_paints)
     {
         LOG(boost::format("Comparing: %d and %d") % _paint_data.first % paragraph_num);
         if (_compare(_paint_data.first, paragraph_num))
         {
-            LOG("Nice result...");
-            for (const PaintPoint& _paint_data_n : _paint_data.second)
-            {
-                if (_compare(_paint_data.first, run_num))
+            LOG("Nice result..." <<  _paint_data.second.size() << " count.");
+            if (_paint_data.first == paragraph_num) {
+                for (const PaintPoint& _paint_data_n : _paint_data.second)
                 {
-                    LOG("Inserting a paint with num: " << _paint_data_n.paint_num);
-                    ready_paints.insert(_paint_data_n.paint_num);
+                    LOG("Checking run: " << _paint_data_n.run_num);
+                    if (_compare(_paint_data_n.run_num, _run_num))
+                    {
+                        LOG("Inserting a paint with num: " << _paint_data_n.paint_num);
+                        ready_paints.push_back(_paint_data_n.paint_num);
+                    }
                 }
+            }
+            else
+            {
+                LOG("Adding all paints...");
+                std::transform(_paint_data.second.begin(), _paint_data.second.end(), std::back_inserter(ready_paints), [](const PaintPoint& _point) {return _point.paint_num;});
             }
         }
     }
     boost::algorithm::trim_if(bracket_expression, boost::algorithm::is_any_of("{}"));
 
-    unsigned int _min_element = (is_before) ? *ready_paints.rbegin() : *ready_paints.begin();
-    LOG("Found min: " << _min_element);
     std::string standart_variable;
-    standart_variable += *sym_iter;
-
-    exprtk::symbol_table<double> _symbol_table;
-    exprtk::expression<double> _expression;
+    standart_variable += _action_char;
+    
     exprtk::parser<double> _parser;
 
-    _symbol_table.add_constant(standart_variable, _min_element);
-    _symbol_table.add_constants();
-
-    _expression.register_symbol_table(_symbol_table);
     _parser.compile(bracket_expression, _expression);
-    double _dx = std::ceil(_expression.value() - 1);
+
+    unsigned int _dx = static_cast<unsigned int>(std::ceil(_expression.value())) - 1;
     LOG("Step: " << _dx);
 
-    return _min_element + static_cast<unsigned int>(_dx);
+    unsigned int _result = (is_before) ? *(ready_paints.rbegin() + _dx) : *(ready_paints.begin() + _dx);
+    LOG("Found min: " << _result);
+    return _result;
 }
 
 bool PaintsNumberer::is_pattern_has(std::wstring _text)
