@@ -84,6 +84,7 @@ protected:
     void add_paint_num_to_table(const unsigned int& paragraph_num, const unsigned int& run_num,const unsigned int& paint_num);
 
     long get_paint_num(std::string bracket_expression, const unsigned int& paragraph_num, const int& run_num);
+    std::string create_paint_num_title(unsigned int num);
 
     bool is_pattern_has(std::wstring _text);
     bool is_has_intext_pattern(std::wstring _text);
@@ -97,8 +98,6 @@ protected:
     std::unordered_set<PatternTitle> _paint_patterns;
     std::map<unsigned int, std::vector<PaintPoint>> _setted_paints;
 
-    exprtk::symbol_table<double> _symbol_table;
-    exprtk::expression<double> _expression;
 
     unsigned int _paints_count, _max_numeration, _min_numeration;
 

@@ -13,7 +13,7 @@ list(APPEND LIBRARIES_INCLUDES "C:\\Lib\\_include")
 
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${LIBRARIES_DIRS} "${DUCKX_DIRECTORY}/cmake/duckx" "/usr/local" )
 
-find_package(Boost REQUIRED headers log regex)
+find_package(Boost REQUIRED headers Log Regex)
 find_package(duckx REQUIRED HINTS ${DUCKX_DIRECTORY})
 find_package(pugixml CONFIG REQUIRED)
 

@@ -42,7 +42,7 @@ def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = True):
 
     out = proc.stdout
     errors = proc.stderr
-    
+
     while proc.poll() is None:
         out_line = out.readline()
 
@@ -66,6 +66,7 @@ def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = True):
 class CMakeInteractor:
     _build_dir: str = None
     _build_type: str = None
+    _last_return_code: int = None
 
     _file_find_pattern = "*_tests.exe" if sys.platform == "win32" else "*_tests"
 
@@ -77,18 +78,20 @@ class CMakeInteractor:
         build_type_ = []
 
         if self._build_type is not None:
-            build_type_.extend(["-G", f"\"{self._build_type}\""])
+            build_type_.extend(["-G", self._build_type])
 
         if is_debug:
             build_type_.append("-DDEBUG_LIB=ON")
 
-        for path_of_lib in ["boost_path", "duckx_path", "pugixml_path"]:
+        for path_of_lib in ["boost_root", "boost_path", "duckx_path", "pugixml_path"]:
             if not kwargs.get(path_of_lib):
-                kwargs[path_of_lib] = "/usr/local"
+                kwargs[path_of_lib] = "/usr/local" if sys.platform == "linux" else "C:/Lib/"
 
-        lib_dirs_ = [f"-DBoost_DIR={kwargs["boost_path"]}", f"-DDUCKX_DIRECTORY={kwargs["duckx_path"]}",f"-DPUGIXML_DIRECTORY={kwargs["pugixml_path"]}"]
+            print(f"Path of {path_of_lib}: {kwargs.get(path_of_lib)}")
 
-        self._configure_subproc(["cmake", "-B", str(self._build_dir), *build_type_, *lib_dirs_], "CONFIGURE")
+        lib_dirs_ = [f"-DBoost_ROOT={kwargs["boost_root"]}", f"-DBoost_DIR={kwargs["boost_path"]}", f"-DDUCKX_DIRECTORY={kwargs["duckx_path"]}",f"-DPUGIXML_DIRECTORY={kwargs["pugixml_path"]}"]
+
+        return self._configure_subproc(["cmake", "-B", str(self._build_dir), *build_type_, *lib_dirs_], "CONFIGURE")
 
     def build(self):
         self._configure_subproc(["cmake", "--build", str(self._build_dir)], "BUILD")
@@ -96,9 +99,9 @@ class CMakeInteractor:
     def _configure_subproc(self, args: list[str], title: str):
         print("[SYSTEM]: Subproc args: ", " ".join(args))
         configure_proc = s.Popen(args, stdout=s.PIPE, stderr=s.PIPE)
-        self._configure_subproc_obj(configure_proc, title)
+        self._configure_subproc_print_obj(configure_proc, title)
 
-    def _configure_subproc_obj(self, configure_proc: s.Popen, title: str):
+    def _configure_subproc_print_obj(self, configure_proc: s.Popen, title: str):
         t.sleep(5)
 
         print_th = th.Thread(target=PrintErrors, args=[configure_proc, title])
@@ -106,6 +109,14 @@ class CMakeInteractor:
 
         configure_proc.wait()
         print_th.join()
+
+        self._last_return_code = configure_proc.returncode
+        if self.return_code != 0:
+            raise Exception(f"Failed on stage: '{title}'")
+
+    @property
+    def return_code(self):
+        return self._last_return_code
 
     def copy_test_files(self, include_files_patterns: list[str]):
         build_dir_obj = pl.Path(self._build_dir)
@@ -132,7 +143,7 @@ class CMakeInteractor:
                 command = f"{file} --log_level=message"
                 print(f"Ready command: {c.Fore.CYAN}{command}")
                 test_process = s.Popen(command, shell=True, encoding='utf-8', cwd=str(file.parent), stdout=s.PIPE, stderr=s.STDOUT)
-                self._configure_subproc_obj(test_process, "TEST")
+                self._configure_subproc_print_obj(test_process, "TEST")
                 valid_files.append(file)
 
         return valid_files
@@ -143,18 +154,19 @@ def choose_path(first_path: str, second_path: str = "/usr/local"):
 def main():
     c.init(autoreset=True)
     build_dir = pl.Path("build").absolute()
+
     boost_directory = choose_path("C:/Lib/boost", "/usr/local/Boost")
     duckx_directory = choose_path("C:/Lib/duckx")
     pugixml_directory = choose_path("C:/Lib/pugixml")
 
-    boost_directory += "lib/cmake/Boost-1.91.0"
-    build_type = None
+    build_type = None if sys.platform == "linux" else "MinGW Makefiles"
 
     try:
         interactor = CMakeInteractor(build_type, build_dir=build_dir)
         interactor.configure(
             True,
-            boost_path=boost_directory,
+            boost_root=boost_directory,
+            boost_path=boost_directory + "/lib/cmake/Boost-1.91.0",
             duckx_path=duckx_directory,
             pugixml_path=pugixml_directory
         )
