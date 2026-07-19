@@ -710,6 +710,8 @@ std::string PaintsNumberer::get_correct_num_of_intext_paint(
 
 bool PaintsNumberer::is_paints_setted()
 {
-    LOG("Paints count greater 5: " << (_paints_count > 0) << " Setted is not empty: " << !_setted_paints.empty());
+    LOG("Paints count greater than 0: " << (_paints_count > 0) << 
+        ". Setted is not empty: " << !_setted_paints.empty() << 
+        ". Full condition " << (!_setted_paints.empty() && _paints_count > 0));
     return !_setted_paints.empty() && _paints_count > 0;
 }

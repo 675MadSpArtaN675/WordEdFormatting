@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(NumbererNumeratingTest)
 
     BOOST_TEST_MESSAGE("Testing numeration...");
     BOOST_TEST(!_numberer.empty());
-    BOOST_TEST(!_numberer.is_paints_setted());
+    BOOST_TEST(_numberer.is_paints_setted());
 }
 
 BOOST_AUTO_TEST_CASE(NumbererNumeratingWithPartitionsTest)
