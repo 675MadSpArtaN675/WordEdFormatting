@@ -4,11 +4,15 @@
 #define BOOST_ATOMIC_WINDOWS_DISABLE_WAIT_ON_ADDRESS
 #define BOOST_ATOMIC_NO_ATOMIC_WAIT
 
-#define STANDARD_PAINT_PATTERN "Рисунок\\s*\\{.*\\}\\s*[‒–—−―]?[\\sа-яА-Я\\w]*"
+#ifndef DISABLE_STANDART_PATTERNS
+    #define STANDARD_PAINT_PATTERN "Рисунок\\s*\\{.*\\}\\s*[‒–—−―]?[\\sа-яА-Я\\w]*"
+    #define NORMAL_CONDITION !
+#endif
 
 #include <map>
 #include <list>
 #include <vector>
+#include <queue>
 #include <string>
 #include <memory>
 #include <iterator>
@@ -63,7 +67,10 @@ public:
     unsigned int get_max_numeration();
 
     unsigned int paints_count();
+
+    bool is_paints_setted();
     bool empty();
+
     void clear();
 
     void numerate_in_text();
@@ -83,8 +90,10 @@ protected:
     void align_runs(std::vector<duckx::Run>& _prepared_runs, duckx::Run& runs_old);
     void add_paint_num_to_table(const unsigned int& paragraph_num, const unsigned int& run_num,const unsigned int& paint_num);
 
-    long get_paint_num(std::string bracket_expression, const unsigned int& paragraph_num, const int& run_num);
+    long get_paint_num(std::string bracket_expression, const unsigned int& paragraph_num, const int& run_num, std::vector<unsigned int>& old_num);
     std::string create_paint_num_title(unsigned int num);
+
+    std::string get_correct_num_of_intext_paint(std::string bracket_expression, const unsigned int& paragraph_num, const int& run_num, std::vector<unsigned int>& old_nums);
 
     bool is_pattern_has(std::wstring _text);
     bool is_has_intext_pattern(std::wstring _text);
@@ -97,7 +106,6 @@ protected:
     std::unique_ptr<duckx::Document> _document;
     std::unordered_set<PatternTitle> _paint_patterns;
     std::map<unsigned int, std::vector<PaintPoint>> _setted_paints;
-
 
     unsigned int _paints_count, _max_numeration, _min_numeration;
 

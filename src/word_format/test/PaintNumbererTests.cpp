@@ -10,12 +10,12 @@ BOOST_AUTO_TEST_CASE(NumbererInitializationTest)
     PaintsNumberer _numberer;
 
     BOOST_TEST_MESSAGE("Testing numberer initialization...");
-    BOOST_TEST(_numberer.empty());
+    BOOST_TEST(NORMAL_CONDITION _numberer.empty());
 
     _numberer.setFile("TestFile_1.docx");
 
     BOOST_TEST_MESSAGE("Testing numberer setting file...");
-    BOOST_TEST(_numberer.empty());
+    BOOST_TEST(NORMAL_CONDITION _numberer.empty());
 }
 
 BOOST_AUTO_TEST_CASE(NumbererNumeratingTest)
@@ -29,6 +29,7 @@ BOOST_AUTO_TEST_CASE(NumbererNumeratingTest)
 
     BOOST_TEST_MESSAGE("Testing numeration...");
     BOOST_TEST(!_numberer.empty());
+    BOOST_TEST(!_numberer.is_paints_setted());
 }
 
 BOOST_AUTO_TEST_CASE(NumbererNumeratingWithPartitionsTest)
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(NumbererInTextNumerationTest)
         _numberer.numerate_in_text();
 
         BOOST_TEST_MESSAGE("Testing numeration with partition...");
-        BOOST_TEST(!_numberer.empty());
+        BOOST_TEST(_numberer.is_paints_setted());
     }
     catch (const std::exception& _error){
         BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());
@@ -78,7 +79,7 @@ BOOST_AUTO_TEST_CASE(NumbererInTextNumerationWithPartitionTest)
         _numberer.numerate_in_text();
 
         BOOST_TEST_MESSAGE("Testing numeration with partition...");
-        BOOST_TEST(!_numberer.empty());
+        BOOST_TEST(_numberer.is_paints_setted());
     }
     catch (const std::exception& _error){
         BOOST_TEST_MESSAGE(std::string("Error: ") + _error.what());

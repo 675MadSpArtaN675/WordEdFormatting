@@ -224,6 +224,7 @@ void PaintsNumberer::numerate_in_text()
         std::wstring paragraph_text = get_wstring_paragraph_text(_par, count);
         std::string str_paragraph_text = boost::locale::conv::utf_to_utf<char>(paragraph_text);
 
+        std::vector<unsigned int> _old_nums;
         LOG("Checking paragraph: " + str_paragraph_text);
         if (!is_pattern_has(paragraph_text) && !is_has_intext_pattern(paragraph_text))
         {
@@ -263,8 +264,8 @@ void PaintsNumberer::numerate_in_text()
                         run_text.erase(_bracket_start, ++_bracket_end);
                     }
 
-                    unsigned int value = get_paint_num(brackets, i, run_counter);
-                    run_text.insert(position, create_paint_num_title(value));
+                    std::string number = get_correct_num_of_intext_paint(brackets, i, run_counter, _old_nums);
+                    run_text.insert(position, number);
 
                     LOG("New: " + run_text);
                     _run.set_text(run_text);
@@ -309,8 +310,8 @@ void PaintsNumberer::numerate_in_text()
                         LOG("Semi now: " << semi_brackets);
                         boost::algorithm::trim_if(semi_brackets, boost::algorithm::is_any_of("{}"));
 
-                        unsigned int value = get_paint_num(semi_brackets, i, run_counter);
-                        run_text.insert(0, create_paint_num_title(value));
+                        std::string number = get_correct_num_of_intext_paint(semi_brackets, i, run_counter, _old_nums);
+                        run_text.insert(0, number);
 
                         LOG("Run text: " << run_text);
                         _run.set_text(run_text);
@@ -337,7 +338,7 @@ void PaintsNumberer::numerate_in_text()
     LOG("Numering is ended...");
 }
 
-long PaintsNumberer::get_paint_num(std::string bracket_expression, const unsigned int& paragraph_num, const int& run_num)
+long PaintsNumberer::get_paint_num(std::string bracket_expression, const unsigned int& paragraph_num, const int& run_num, std::vector<unsigned int>& old_num)
 {
     bool is_before = false;
     std::string::iterator sym_iter = std::find_if(
@@ -389,33 +390,56 @@ long PaintsNumberer::get_paint_num(std::string bracket_expression, const unsigne
     std::cout << std::endl;
 
     boost::algorithm::trim_if(bracket_expression, boost::algorithm::is_any_of("{}"));
-    bracket_expression.insert(0, {_action_char, '\0'});
+    if (bracket_expression.empty())
+    {
+        bracket_expression.insert(0, std::string() + _action_char);
+    }
     LOG("Expression: " << bracket_expression);
 
     if (!ready_paints.empty()) {
+        auto _get_num_from_collection = [&is_before, &ready_paints](unsigned int _dx) 
+            { return (is_before) ? *(ready_paints.rbegin() + _dx) : *(ready_paints.begin() + _dx); };
+
+        unsigned int _result = 0;
         try {
             exprtk::symbol_table<long double> _symbol_table;
             exprtk::expression<long double> _expression;
             exprtk::parser<long double> _parser;
 
             _symbol_table.add_constant("N", 1);
+            _symbol_table.add_constant("P", 1);
             _symbol_table.add_constants();
+
             _expression.register_symbol_table(_symbol_table);
+            LOG("Init expression: " << bracket_expression);
 
-            _parser.compile(bracket_expression, _expression);
+            if (_parser.compile(bracket_expression, _expression))
+            {
+                long double _double_dx = std::ceil(_expression.value());
+                unsigned int _dx = static_cast<unsigned int>(_double_dx) - 1;
+                LOG("Step: " << _dx << " Start result: " << _result);
 
-            long double _double_dx = _expression.value();
-            unsigned int _dx = static_cast<unsigned int>(_double_dx) - 1;
-            LOG("Step: " << _dx << " Double: " << _double_dx);
+                _result = _get_num_from_collection(_dx++);
+                while (std::find(old_num.begin(), old_num.end(), _result) != old_num.end() && _result > 0)
+                {
+                    LOG("New result: " << _result);
+                    _result = _get_num_from_collection(_dx++);
+                }
 
-            unsigned int _result = (is_before) ? *(ready_paints.rbegin() + _dx) : *(ready_paints.begin() + _dx);
-            LOG("Found min: " << _result);
+                if (_result > 0)
+                {
+                    old_num.push_back(_result);
+                }
+
+                LOG("Found min: " << _result);
+            }
+
             return _result;
         }
         catch (const std::exception& _error)
         {
             LOG("Error: " << _error.what());
-            return 0;
+            return _result;
         }
     }
 
@@ -672,4 +696,20 @@ void PaintsNumberer::add_paint_num_to_table(const unsigned int& paragraph_num, c
 
     LOG(boost::format("Paragraph num: %d;\nRun num: %d;\nPaint num: %d") % paragraph_num % run_num % paint_num);
     _setted_paints[paragraph_num].push_back(PaintPoint(paragraph_num, run_num, paint_num));
+}
+
+std::string PaintsNumberer::get_correct_num_of_intext_paint(
+    std::string bracket_expression,
+    const unsigned int &paragraph_num, const int &run_num,
+    std::vector<unsigned int> &old_nums)
+{
+    unsigned int value = get_paint_num(bracket_expression, paragraph_num, run_num, old_nums);
+
+    return create_paint_num_title(value);
+}
+
+bool PaintsNumberer::is_paints_setted()
+{
+    LOG("Paints count greater 5: " << (_paints_count > 0) << " Setted is not empty: " << !_setted_paints.empty());
+    return !_setted_paints.empty() && _paints_count > 0;
 }
