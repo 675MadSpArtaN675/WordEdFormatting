@@ -92,7 +92,7 @@ protected:
     std::vector<duckx::Run> get_runs(duckx::Paragraph& _par);
     std::wstring get_wstring_paragraph_text(duckx::Paragraph& _par);
     std::wstring get_wstring_paragraph_text(duckx::Paragraph& _par, unsigned int& count);
-
+    bool PaintsNumberer::is_paints_setted();
 
     std::unique_ptr<duckx::Document> _document;
     std::unordered_set<PatternTitle> _paint_patterns;
