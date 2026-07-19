@@ -4,6 +4,7 @@
 
 #include "paints_numberer.hpp"
 
+
 BOOST_AUTO_TEST_CASE(NumbererInitializationTest)
 {
     BOOST_TEST_MESSAGE("START: 'NumbererInitializationTest'...");
