@@ -5,17 +5,11 @@
 #include <string>
 #include <map>
 #include <memory>
-#include <concepts>
 
 #include <boost/bimap.hpp>
 #include <boost/regex.hpp>
 
 #include "exporter.hpp"
-
-template<typename T>
-concept StringConvertable = std::convertible_to<T, std::string>
-    || requires(T type) { type.str(); } 
-    || requires(T type) { type.to_str(); };
 
 class EXPORT Formatter {
 public:
@@ -27,13 +21,13 @@ public:
     void setFilePattern(std::string file_name);
 
     template<StringConvertable T>
-    void bindArg(T _arg_value);
-
-    template<StringConvertable T>
     void bindArg(int arg_num, T _arg_value);
 
     template<StringConvertable T>
     void bindArg(std::string arg_name, T _arg_value);
+
+    template<StringConvertable T>
+    void bindArg(T _arg_value);
 
     void removeArg(int arg_num);
     void removeArg(std::string arg_name);
@@ -72,5 +66,7 @@ protected:
     std::string _name;
     std::unique_ptr<duckx::Document> _document;
 };
+
+#include "formatter_impl.hpp"
 
 #endif

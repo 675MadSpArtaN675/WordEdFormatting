@@ -1,4 +1,7 @@
 #include "formatter.hpp"
+#include <boost/regex/v5/match_flags.hpp>
+#include <boost/regex/v5/regex.hpp>
+#include <boost/regex/v5/regex_iterator.hpp>
 
 Formatter::Formatter() : Formatter("")
 { }
@@ -30,39 +33,7 @@ void Formatter::setFilePattern(std::string file_pattern_name)
 
     _name = file_pattern_name;
     _document = std::make_unique<duckx::Document>(duckx::Document(file_pattern_name));
-}
-
-template<StringConvertable T>
-void Formatter::bindArg(T _arg_value)
-{
-    bindArg(0, _arg_value);
-}
-
-template<StringConvertable T>
-void Formatter::bindArg(int arg_num, T _arg_value)
-{
-    if (arg_num < 1)
-    {
-        arg_num = get_free_index();
-    }
-
-    if (_args.contains(arg_num)) {
-        _args[arg_num].reset(_arg_value.str());
-    }
-    else {
-        _args[arg_num] = std::make_shared<T>(_arg_value.str());
-    }
-}
-
-template<StringConvertable T>
-void Formatter::bindArg(std::string arg_name, T _arg_value)
-{
-    if (_aliases.left.find(arg_name) != end(_aliases.left))
-    {
-        unsigned int _index = _aliases.left[arg_name];
-    
-        bindArg(_index, _arg_value);
-    }
+    init_formatter();
 }
 
 void Formatter::removeArg(int arg_num)
@@ -147,27 +118,10 @@ std::string Formatter::toStr()
     return std::string();
 }
 
-
-template<StringConvertable T>
-Formatter Formatter::operator%(T value)
-{
-    Formatter formatter(*this);
-    formatter.bindArg(value);
-
-    return formatter;
-}
-
-template<StringConvertable T>
-Formatter& Formatter::operator%=(T value)
-{
-    bindArg(value);
-
-    return *this; 
-}
-
 void Formatter::init_formatter()
 {
     boost::regex value_place_pattern("\\{(?<name>[\\w_]*)(?<parameters>\\:[\\w#_-\\d]*)?\\}");
+    clearArgs();
 
     try {
         _document->open();
@@ -178,6 +132,24 @@ void Formatter::init_formatter()
 
             while (now_run.has_next()) {
                 std::string _text = now_run.get_text();
+                LOG("Now text: " << _text);
+
+                boost::regex_iterator<std::string::const_iterator> _iter = boost::make_regex_iterator(_text, value_place_pattern, boost::regex_constants::match_partial);
+
+                for (; _iter != boost::regex_iterator<std::string::const_iterator>(); _iter++)
+                {
+                    boost::smatch _match = *_iter;
+                    
+                    if (_match[0].matched && _match[0].first != _match[0].second)
+                    {
+                        LOG("Full scan: " << _match);
+                    }
+                    else if (!_match[0].matched && _match[0].first != _match[0].second)
+                    {
+                        LOG("Partial scan: " << _match);
+
+                    }
+                }
 
                 now_run = now_run.next();
             }
@@ -189,7 +161,7 @@ void Formatter::init_formatter()
     }
     catch (const std::exception& error)
     {
-        
+        LOG("Error: " << error.what());
     }
 }
 

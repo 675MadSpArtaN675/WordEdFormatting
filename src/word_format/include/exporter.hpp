@@ -15,9 +15,15 @@
 #endif
 
 #ifdef DEBUG_LOG
+    #include <iostream>
     #define LOG(message) std::cout << message << std::endl
 #else
     #define LOG(message)
 #endif
 
+#include <concepts>
+
 #include <duckx/duckx.hpp>
+
+template<typename T>
+concept StringConvertable = std::same_as<T, std::string> || std::convertible_to<T, std::string>;

@@ -13,7 +13,7 @@ list(APPEND LIBRARIES_INCLUDES "C:\\Lib\\_include")
 
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${LIBRARIES_DIRS} "${DUCKX_DIRECTORY}/cmake/duckx" "/usr/local" )
 
-find_package(Boost REQUIRED headers Log Regex)
+find_package(Boost REQUIRED headers Log Regex unit_test_framework)
 find_package(duckx REQUIRED HINTS ${DUCKX_DIRECTORY})
 find_package(pugixml CONFIG REQUIRED)
 
@@ -47,5 +47,5 @@ file(GLOB TEST_SOURCES "test/*.cpp")
 message("Compiling: ${TEST_SOURCES}")
 add_executable(word_formatter_tests ${TEST_SOURCES} ${HEADERS})
 
-target_link_libraries(word_formatter_tests PRIVATE word_formatter)
-target_include_directories(word_formatter_tests PRIVATE "include")
+target_link_libraries(word_formatter_tests PRIVATE word_formatter Boost::unit_test_framework)
+target_include_directories(word_formatter_tests PRIVATE word_formatter Boost::unit_test_framework)
