@@ -6,6 +6,8 @@
 #include <map>
 #include <memory>
 
+#include <boost/filesystem.hpp>
+
 #include <boost/bimap.hpp>
 #include <boost/regex.hpp>
 
@@ -13,6 +15,9 @@
 
 class EXPORT Formatter {
 public:
+    using aliases_collection_type = boost::bimap<std::string, unsigned int>;
+    using arguments_collection_type = std::map<unsigned int, std::shared_ptr<std::string>>;
+
     Formatter();
     Formatter(std::string file_pattern_name);
     Formatter(const Formatter& other);
@@ -44,7 +49,6 @@ public:
     unsigned int count();
     void clearArgs();
 
-    std::string toStr();
     void saveTo(std::string filename);
 
     template<StringConvertable T>
@@ -58,13 +62,23 @@ public:
 
 protected:
     void init_formatter();
+    void add_arg(const boost::smatch& _match);
+
+    void get_places_for_values(const std::vector<duckx::Run>& _runs, std::string _text, boost::regex& value_place_pattern, int& run_counter);
+    void join_partial_text(const std::vector<duckx::Run>& _runs, std::string& full_partial_arg, boost::regex& value_place_pattern, int& run_counter);
+
+    void getting_places(duckx::Run& selected_run, std::string& text_of_run, unsigned int& _index_of_run);
+    void saving_partial_place(duckx::Run& selected_run, std::string& text_of_run, boost::smatch& _match, const unsigned int& _index_of_run);
+
     unsigned int get_free_index();
 
-    boost::bimap<std::string, unsigned int> _aliases;
-    std::map<unsigned int, std::shared_ptr<std::string>> _args;
-    
+    aliases_collection_type _aliases;
+    arguments_collection_type _args;
+
     std::string _name;
     std::unique_ptr<duckx::Document> _document;
+
+    boost::regex value_place_pattern{"[\\[\\{](?<name>[\\w_]*)(?<parameters>\\:[\\w#_-\\d]*)?[\\]\\}]"};
 };
 
 #include "formatter_impl.hpp"

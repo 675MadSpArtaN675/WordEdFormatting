@@ -55,6 +55,7 @@ def PrintErrors(proc: s.Popen, title: str, to_file_write_too: bool = True):
         if not out_line:
             t.sleep(0.3)
 
+    t.sleep(1.75)
     for stream_opts in streams:
         print_remains_text(stream_opts.stream, out, errors, title, stream_opts.is_colored)
 

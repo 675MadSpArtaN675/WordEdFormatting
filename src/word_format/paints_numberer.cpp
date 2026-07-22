@@ -247,8 +247,8 @@ void PaintsNumberer::numerate_in_text()
                     run_counter++;
                     continue;
                 }
-                auto _bracket_start = std::find(run_text.begin(), run_text.end(), '{');
 
+                auto _bracket_start = std::find(run_text.begin(), run_text.end(), '{');
                 auto _bracket_end = std::find(run_text.begin(), run_text.end(), '}');
 
                 if (_bracket_start != run_text.end()
@@ -355,8 +355,8 @@ long PaintsNumberer::get_paint_num(std::string bracket_expression, const unsigne
         _action_char = 'N';
     }
 
-    auto _compare = (is_before) ? [](const unsigned int& _first, const unsigned int& second){ return _first <= second; }
-        : [](const unsigned int& _first, const unsigned int& second){ return _first >= second; };
+    auto _compare = (is_before) ? [](const unsigned int& _first, const unsigned int& second) { return _first <= second; }
+        : [](const unsigned int& _first, const unsigned int& second) { return _first >= second; };
 
     LOG("Normal run: " << run_num);
     LOG(boost::format("Expression: '%s' - Paragraph: #%d; Run: #%d; Before or next: %d") % bracket_expression % paragraph_num % run_num % is_before);
@@ -397,7 +397,7 @@ long PaintsNumberer::get_paint_num(std::string bracket_expression, const unsigne
     LOG("Expression: " << bracket_expression);
 
     if (!ready_paints.empty()) {
-        auto _get_num_from_collection = [&is_before, &ready_paints](unsigned int _dx) 
+        auto _get_num_from_collection = [&is_before, &ready_paints](unsigned int _dx)
             { return (is_before) ? *(ready_paints.rbegin() + _dx) : *(ready_paints.begin() + _dx); };
 
         unsigned int _result = 0;
@@ -710,8 +710,8 @@ std::string PaintsNumberer::get_correct_num_of_intext_paint(
 
 bool PaintsNumberer::is_paints_setted()
 {
-    LOG("Paints count greater than 0: " << (_paints_count > 0) << 
-        ". Setted is not empty: " << !_setted_paints.empty() << 
+    LOG("Paints count greater than 0: " << (_paints_count > 0) <<
+        ". Setted is not empty: " << !_setted_paints.empty() <<
         ". Full condition " << (!_setted_paints.empty() && _paints_count > 0));
     return !_setted_paints.empty() && _paints_count > 0;
 }

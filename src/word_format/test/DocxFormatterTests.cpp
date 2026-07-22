@@ -12,6 +12,13 @@ BOOST_AUTO_TEST_CASE(DocxFormatterInitTest)
     BOOST_TEST(_formatter.count() == 0);
 }
 
+BOOST_AUTO_TEST_CASE(DocxFormatterInitSecondTest)
+{
+    Formatter _formatter("FTestFile_1.docx");
+
+    BOOST_TEST(_formatter.count() == 7);
+}
+
 BOOST_AUTO_TEST_CASE(DocxFormatterComboFillTest)
 {
     Formatter _formatter("FTestFile_1.docx");
@@ -19,5 +26,8 @@ BOOST_AUTO_TEST_CASE(DocxFormatterComboFillTest)
     _formatter.bindArg<std::string>("FIO", "Иванов Иван Иванович");
     _formatter.bindArg<std::string>("GROUP", "бИСТ-232");
 
-    BOOST_TEST(_formatter.count() == 2);
+    _formatter.saveTo("New_FTestFile_1.docx");
+
+    BOOST_TEST_MESSAGE("File saved!");
+    BOOST_TEST(_formatter.count() == 7);
 }
