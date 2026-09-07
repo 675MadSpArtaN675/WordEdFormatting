@@ -68,12 +68,20 @@ class CMakeInteractor:
     _build_dir: str = None
     _build_type: str = None
     _last_return_code: int = None
+    _is_build_test: bool = False
 
     _file_find_pattern = "*_tests.exe" if sys.platform == "win32" else "*_tests"
 
-    def __init__(self, build_type: str | None = None, build_dir: str = "build"):
+    def __init__(self, build_type: str | None = None, is_build_test: bool = False, build_dir: str = "build"):
         self._build_dir = pl.Path(build_dir).absolute()
         self._build_type = build_type
+        self._is_build_test = is_build_test
+
+    def set_is_build_test(self, value: bool):
+        self._is_build_test = value
+
+    def is_build_tests(self):
+        return self._is_build_test
 
     def configure(self, is_debug: bool, **kwargs):
         build_type_ = []
@@ -92,7 +100,7 @@ class CMakeInteractor:
 
         lib_dirs_ = [f"-DBoost_ROOT={kwargs["boost_root"]}", f"-DBoost_DIR={kwargs["boost_path"]}", f"-DDUCKX_DIRECTORY={kwargs["duckx_path"]}",f"-DPUGIXML_DIRECTORY={kwargs["pugixml_path"]}"]
 
-        return self._configure_subproc(["cmake", "-B", str(self._build_dir), *build_type_, *lib_dirs_], "CONFIGURE")
+        return self._configure_subproc(["cmake", "-B", str(self._build_dir), f"-DBUILD_TESTS={"ON" if self._is_build_test else "OFF"}", *build_type_, *lib_dirs_], "CONFIGURE")
 
     def build(self):
         self._configure_subproc(["cmake", "--build", str(self._build_dir)], "BUILD")
@@ -134,7 +142,6 @@ class CMakeInteractor:
         build_dir_obj = pl.Path(self._build_dir)
         print(c.Fore.GREEN + "Valid path: " + c.Fore.LIGHTCYAN_EX + str(build_dir_obj))
 
-        cwd = pl.Path.cwd()
         valid_files = []
         for file in build_dir_obj.rglob(self._file_find_pattern):
             file_name = file.name
@@ -154,16 +161,17 @@ def choose_path(first_path: str, second_path: str = "/usr/local"):
 
 def main():
     c.init(autoreset=True)
+    is_build_tests = True
     build_dir = pl.Path("build").absolute()
 
-    boost_directory = choose_path("C:/Lib/boost", "/usr/local/Boost")
+    boost_directory = choose_path("C:/Lib/boost")
     duckx_directory = choose_path("C:/Lib/duckx")
     pugixml_directory = choose_path("C:/Lib/pugixml")
 
     build_type = None if sys.platform == "linux" else "MinGW Makefiles"
 
     try:
-        interactor = CMakeInteractor(build_type, build_dir=build_dir)
+        interactor = CMakeInteractor(build_type, is_build_test=is_build_tests, build_dir=build_dir)
         interactor.configure(
             True,
             boost_root=boost_directory,
@@ -174,11 +182,12 @@ def main():
 
         interactor.build()
 
-        print(c.Fore.GREEN + "\nCopying test files...")
-        interactor.copy_test_files(["*.docx"])
+        if interactor.is_build_tests():
+            print(c.Fore.GREEN + "\nCopying test files...")
+            interactor.copy_test_files(["*.docx"])
 
-        print(c.Fore.BLUE + "\nStarting tests...")
-        interactor.start_tests([])
+            print(c.Fore.BLUE + "\nStarting tests...")
+            interactor.start_tests([])
 
     except Exception as ex:
         print(f"Error of building project: {ex}")

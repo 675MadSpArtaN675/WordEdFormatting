@@ -11,10 +11,12 @@ list(APPEND LIBRARIES_INCLUDES "${DUCKX_DIRECTORY}/include/duckx")
 list(APPEND LIBRARIES_INCLUDES "${DUCKX_DIRECTORY}/include")
 list(APPEND LIBRARIES_INCLUDES "C:\\Lib\\_include")
 
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${LIBRARIES_DIRS} "${DUCKX_DIRECTORY}/cmake/duckx" "/usr/local" )
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${DUCKX_DIRECTORY} ${LIBRARIES_DIRS} "${DUCKX_DIRECTORY}/cmake/duckx" "/usr/local" )
+
+option(BUILD_TEST "Need to build test" OFF)
 
 find_package(Boost REQUIRED headers Log Regex unit_test_framework)
-find_package(duckx REQUIRED HINTS ${DUCKX_DIRECTORY})
+find_package(duckx REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
 
 message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
@@ -41,11 +43,14 @@ endif()
 
 target_compile_definitions(word_formatter PRIVATE BUILD_LIB)
 
-message("Compiling tests...")
-file(GLOB TEST_SOURCES "test/*.cpp")
+if (BUILD_TESTS)
+    message("Compiling tests...")
+    file(GLOB TEST_SOURCES "test/*.cpp")
 
-message("Compiling: ${TEST_SOURCES}")
-add_executable(word_formatter_tests ${TEST_SOURCES} ${HEADERS})
+    message("Compiling: ${TEST_SOURCES}")
+    add_executable(word_formatter_tests ${TEST_SOURCES} ${HEADERS})
 
-target_link_libraries(word_formatter_tests PRIVATE word_formatter Boost::unit_test_framework)
-target_include_directories(word_formatter_tests PRIVATE word_formatter Boost::unit_test_framework)
+    target_link_libraries(word_formatter_tests PRIVATE word_formatter Boost::unit_test_framework)
+    target_include_directories(word_formatter_tests PRIVATE word_formatter Boost::unit_test_framework)
+
+endif()
