@@ -8,4 +8,4 @@ set(SUBPROJECTS_DIR "src")
 
 file(COPY "./TestFile_1.docx" DESTINATION "src/word_format")
 add_subdirectory("${SUBPROJECTS_DIR}/word_format")
-add_subdirectory("${SUBPROJECTS_DIR}/tui_interface")
+add_subdirectory("${SUBPROJECTS_DIR}/tui_of_formatter")
