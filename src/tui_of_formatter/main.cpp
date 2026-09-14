@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
 
     ftxui::Component path_input = ftxui::Input(&_input_path, path_options) | ftxui::center;
     ftxui::Component path_depth = ftxui::Input(&path_depth_input, path_options) | ftxui::center | ftxui::CatchEvent([](ftxui::Event _event) {
-        return _event.is_character() && std::isdigit(_event.character()[0], std::locale(""));
+        return _event.is_character() && std::isdigit(_event.character()[0]);
     }) ;
 
     ftxui::Component get_file_button = ftxui::Button("Get file", output.ExitLoopClosure());
