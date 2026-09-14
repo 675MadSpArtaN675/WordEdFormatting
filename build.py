@@ -161,7 +161,7 @@ def choose_path(first_path: str, second_path: str = "/usr/local"):
 
 def main():
     c.init(autoreset=True)
-    is_build_tests = True
+    is_build_tests = False
     build_dir = pl.Path("build").absolute()
 
     boost_directory = choose_path("C:/Lib/boost")
